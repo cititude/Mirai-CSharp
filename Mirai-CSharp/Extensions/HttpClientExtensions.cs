@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.IO;
 using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -239,7 +241,13 @@ namespace Mirai_CSharp.Extensions
         public static async Task<JsonDocument> GetJsonAsync(this Task<HttpResponseMessage> responseTask, JsonDocumentOptions options, CancellationToken token = default)
         {
             using HttpResponseMessage response = await responseTask.ConfigureAwait(false);
-            using Stream stream = await response.Content.ReadAsStreamAsync();
+
+            // using Stream stream = await response.Content.ReadAsStreamAsync();
+            var obj = JObject.Parse(await response.Content.ReadAsStringAsync());
+            if (!obj.ContainsKey("code"))
+                obj.Add("code", 0);
+            using var stream = new MemoryStream(Encoding.UTF8.GetBytes(obj.ToString()));
+
             return await JsonDocument.ParseAsync(stream, options, token);
         }
 #endif
