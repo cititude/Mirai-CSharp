@@ -243,11 +243,23 @@ namespace Mirai_CSharp.Extensions
             using HttpResponseMessage response = await responseTask.ConfigureAwait(false);
 
             // using Stream stream = await response.Content.ReadAsStreamAsync();
-            var obj = JObject.Parse(await response.Content.ReadAsStringAsync());
-            if (!obj.ContainsKey("code"))
-                obj.Add("code", 0);
-            using var stream = new MemoryStream(Encoding.UTF8.GetBytes(obj.ToString()));
 
+            var content = await response.Content.ReadAsStringAsync();
+
+            try
+            {
+                var tok = JToken.Parse(content);
+                if (tok is JObject obj && !obj.ContainsKey("code"))
+                    obj.Add("code", 0);
+
+                content = tok.ToString();
+            }
+            catch
+            {
+
+            }
+
+            using var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
             return await JsonDocument.ParseAsync(stream, options, token);
         }
 #endif
